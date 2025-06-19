@@ -1,0 +1,39 @@
+name: harmony sdk release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'release tag'
+        required: true
+        type: string
+  
+jobs:
+  harmony-release:
+    runs-on: ubuntu-latest
+    container: 
+      image: ghcr.io/lynx-family/harmony:5.0.9.310
+      options: --cap-add=NET_ADMIN
+      credentials:
+        username: lynx-family
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      # - name: Set MTU
+      #   run: |
+      #     apt install --no-install-recommends -y iproute2 
+      #     ip link set dev eth0 mtu 1450 # remain 50 for k8s overlay
+      #     echo "MTU set successfully"
+      - name: Download Source
+        uses: actions/checkout@v4.2.2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: Install deps
+        run: |
+          source tools/envsetup.sh 
+          hab sync . -f
+      - name: Build & Publish
+        run: |
+          cd harmony
+          ohpm run publish
